@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package sample;
+
+import "validate/validate.proto";
+
+message Decoder {
+    // string key = 1 [(validate.rules).string.min_bytes = 1];
+    // string val = 2 [(validate.rules).string.min_bytes = 1];
+    string domain = 1;
+    string rate_limit_type = 2;
+    bool failure_mode_deny = 3;
+}
