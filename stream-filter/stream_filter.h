@@ -2,8 +2,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "ratelimit.h"
 #include "stream-filter/stream_filter.pb.h"
-
+#include "stream-filter/ratelimit.h"
 #include "envoy/http/context.h"
 #include "envoy/http/filter.h"
 #include "envoy/local_info/local_info.h"
@@ -68,11 +69,13 @@ private:
 
 using FilterConfigSharedPtr = std::shared_ptr<FilterConfig>;
 
-class SampleStreamFilter : public Http::StreamFilter, public Logger::Loggable<Logger::Id::filter>{
+class SampleStreamFilter : public Http::StreamFilter, 
+                           public Logger::Loggable<Logger::Id::filter>,
+                           public RequestCallbacks{
 
 public:
-    SampleStreamFilter(FilterConfigSharedPtr config)
-    : config_(config) {}
+    SampleStreamFilter(FilterConfigSharedPtr config, ClientPtr&& client)
+    : config_(config), client_(std::move(client)) {}
 
     // Http::StreamDecoderFilter
   Http::FilterHeadersStatus decodeHeaders(Http::RequestHeaderMap& headers,
@@ -92,11 +95,16 @@ public:
 
   void onDestroy() override;
 
+  // RateLimit::RequestCallbacks
+  void complete(LimitStatus status) override;
+
 private:
 FilterConfigSharedPtr config_;
 Http::StreamDecoderFilterCallbacks* callbacks_{};
+ClientPtr client_;
 //Http::ResponseHeaderMapPtr response_headers_to_add_;
 //Http::RequestHeaderMap* request_headers_{};
+void initiateCall();
 };
 
 

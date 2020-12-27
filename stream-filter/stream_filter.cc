@@ -7,6 +7,7 @@
 #include "common/common/enum_to_int.h"
 #include "common/common/fmt.h"
 #include "common/http/codes.h"
+#include "ratelimit.h"
 //#include "common/http/header_utility.h"
 //#include "common/router/config_impl.h"
 //#include "extensions/filters/http/well_known_names.h"
@@ -27,6 +28,7 @@ Http::FilterHeadersStatus SampleStreamFilter::decodeHeaders(Http::RequestHeaderM
 }
 
 Http::FilterDataStatus SampleStreamFilter::decodeData(Buffer::Instance&, bool) {
+    initiateCall();
     ENVOY_LOG(trace, "decodeData called");
     ENVOY_LOG(trace, "domain :{}", config_->domain());
 //   if (state_ != State::Calling) {
@@ -77,12 +79,24 @@ void SampleStreamFilter::onDestroy() {
 //     state_ = State::Complete;
 //     client_->cancel();
 //   }
+
+
+
 ENVOY_LOG(trace, "onDestroy called");
 }
 
 void SampleStreamFilter::setDecoderFilterCallbacks(Http::StreamDecoderFilterCallbacks& callbacks) {
 ENVOY_LOG(trace, "decoderCallbacks called");
   callbacks_ = &callbacks;
+}
+
+void SampleStreamFilter::initiateCall() {
+  client_ -> limit(*this, config_->domain(), callbacks_->activeSpan(), callbacks_-> streamInfo());
+}
+
+void SampleStreamFilter::complete(LimitStatus status){
+  ENVOY_LOG(trace, "status :{}", status);
+
 }
 
 

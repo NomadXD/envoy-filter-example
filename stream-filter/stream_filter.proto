@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package sample;
-
+import "envoy/config/ratelimit/v3/rls.proto";
 import "validate/validate.proto";
 
 message Decoder {
@@ -10,4 +10,19 @@ message Decoder {
     string domain = 1;
     string rate_limit_type = 2;
     bool failure_mode_deny = 3;
+    envoy.config.ratelimit.v3.RateLimitServiceConfig rate_limit_service = 4;
+}
+
+service RateLimitService{
+    rpc ShouldRateLimit(RateLimitRequest) returns (RateLimitResponse){
+
+    }
+}
+
+message RateLimitRequest{
+    string domain = 1;
+}
+
+message RateLimitResponse{
+    string result = 1;
 }

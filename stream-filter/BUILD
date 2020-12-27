@@ -16,7 +16,11 @@ envoy_cc_binary(
     ],
 )
 
-api_proto_package()
+api_proto_package(
+    deps = [
+        "@envoy_api//envoy/config/ratelimit/v3:pkg",
+    ]
+)
 
 envoy_cc_library(
     name = "stream_filter_lib",
@@ -29,6 +33,7 @@ envoy_cc_library(
         "@envoy//include/envoy/ratelimit:ratelimit_interface",
         "@envoy//source/common/common:assert_lib",
         "@envoy//source/common/http:codes_lib",
+        ":ratelimit_lib_websocket"
         ],
 )
 
@@ -45,6 +50,43 @@ envoy_cc_library(
     ],
 )
 
+envoy_cc_library(
+    name = "ratelimit_lib_websocket",
+    srcs = ["ratelimit_impl.cc"],
+    hdrs = ["ratelimit_impl.h"],
+    repository = "@envoy",
+    deps = [
+        ":pkg_cc_proto",
+        ":ratelimit_client_websocket_interface",
+        "@envoy//include/envoy/grpc:async_client_interface",
+        "@envoy//include/envoy/grpc:async_client_manager_interface",
+        "@envoy//include/envoy/ratelimit:ratelimit_interface",
+        "@envoy//include/envoy/server:filter_config_interface",
+        "@envoy//include/envoy/upstream:cluster_manager_interface",
+        "@envoy//source/common/common:assert_lib",
+        "@envoy//source/common/common:minimal_logger_lib",
+        "@envoy//source/common/grpc:typed_async_client_lib",
+        "@envoy//source/common/http:headers_lib",
+        "@envoy//source/common/tracing:http_tracer_lib",
+        "@envoy_api//envoy/config/core/v3:pkg_cc_proto",
+        "@envoy_api//envoy/extensions/common/ratelimit/v3:pkg_cc_proto",
+        "@envoy_api//envoy/service/ratelimit/v3:pkg_cc_proto",
+    ],
+)
+
+envoy_cc_library(
+    name = "ratelimit_client_websocket_interface",
+    hdrs = ["ratelimit.h"],
+    repository = "@envoy",
+    external_deps = ["abseil_optional"],
+    deps = [
+        ":pkg_cc_proto",
+        "@envoy//include/envoy/ratelimit:ratelimit_interface",
+        "@envoy//include/envoy/singleton:manager_interface",
+        "@envoy//include/envoy/tracing:http_tracer_interface",
+        "@envoy_api//envoy/service/ratelimit/v3:pkg_cc_proto",
+    ],
+)
 # envoy_cc_test(
 #     name = "http_filter_integration_test",
 #     srcs = ["http_filter_integration_test.cc"],

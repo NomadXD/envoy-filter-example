@@ -5,7 +5,8 @@
 #include "stream_filter_config.h"
 #include "stream-filter/stream_filter.pb.h"
 #include "stream-filter/stream_filter.pb.validate.h"
-#include "stream_filter.h"
+#include "stream-filter/stream_filter.h"
+#include "stream-filter/ratelimit_impl.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -17,15 +18,15 @@ Http::FilterFactoryCb SampleStreamFilterConfig::createFilterFactoryFromProtoType
     const std::string&, 
     Server::Configuration::FactoryContext& context){
 
-    //const std::chrono::milliseconds timeout = std::chrono::milliseconds(20);
+    const std::chrono::milliseconds timeout = std::chrono::milliseconds(20);
 
     FilterConfigSharedPtr filter_config(new FilterConfig(proto_config, context.localInfo(),
                                         context.scope(), context.runtime(),
                                         context.httpContext()));
 
-     return [filter_config](Http::FilterChainFactoryCallbacks& callbacks) -> void {
+     return [proto_config, &context, timeout,filter_config](Http::FilterChainFactoryCallbacks& callbacks) -> void {
     callbacks.addStreamFilter(std::make_shared<SampleStreamFilter>(
-        filter_config));
+        filter_config, rateLimitClient(context, proto_config.rate_limit_service().grpc_service(), timeout, proto_config.rate_limit_service().transport_api_version())));
   };
 
 }
